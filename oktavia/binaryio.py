@@ -1,25 +1,52 @@
+#
+# http://shibu.mit-license.org/
+#  The MIT License (MIT)
+#
+# Copyright (c) 2015 Yoshiki Shibukawa
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+from __future__ import absolute_import
+
 import struct
 import sys
 
+
 _range = range if sys.version_info[0] == 3 else xrange
 
+
 class BinaryInput(object):
-    def __init__(self, buffer, offset=0):
-        self._buffer = buffer;
-        self._offset = offset;
+    def __init__(self, buffer, offset=0):  # @ReservedAssignment
+        self._buffer = buffer
+        self._offset = offset
 
     def load_32bit_number(self):
-        '''
+        """
         :return: number
-        '''
+        """
         result = struct.unpack_from('<I', self._buffer, self._offset)[0]
         self._offset += 4
         return result
 
     def load_16bit_number(self):
-        '''
+        """
         :return: number
-        '''
+        """
         result = struct.unpack_from('<H', self._buffer, self._offset)[0]
         self._offset += 2
         return result
@@ -39,12 +66,12 @@ class BinaryInput(object):
 
     def load_string_list(self):
         length = self.load_32bit_number()
-        return [self.load_string() for i in _range(length)]
+        return [self.load_string() for _ in _range(length)]
 
     def load_string_list_map(self):
         result = {}
         length = self.load_32bit_number()
-        for i in _range(length):
+        for _ in _range(length):
             key = self.load_string()
             values = self.load_string_list()
             result[key] = values
@@ -55,27 +82,28 @@ class BinaryInput(object):
         result = []
         while len(result) < result_length:
             tag = self.load_16bit_number()
-            if (tag >> 15) == 1: # zebra
+            if (tag >> 15) == 1:  # zebra
                 length = min(result_length - len(result), 15)
                 for i in _range(length):
                     if (tag >> i) & 0x1:
                         result.append(self.load_32bit_number())
                     else:
-                        result.append(0);
-            elif (tag >> 14) == 1: # non-zero
+                        result.append(0)
+            elif (tag >> 14) == 1:  # non-zero
                 length = tag - 0x4000 + 1
                 for i in _range(length):
                     result.append(self.load_32bit_number())
-            else: #zero
+            else:  # zero
                 length = tag + 1
                 for i in _range(length):
                     result.append(0)
         return result
 
+
 class BinaryOutput(object):
     def __init__(self):
         self._output = []
-        self.outputBytes = 0;
+        self.outputBytes = 0
 
     def dump_32bit_number(self, num):
         self._output.append(struct.pack('<I', num % (2 ** 32)))
@@ -104,11 +132,10 @@ class BinaryOutput(object):
         length = len(string)
         byte_str = string.encode('utf_16_le')
         compress = True
-        char_codes = []
         for i in _range(1, len(byte_str), 2):
             if byte_str[i] != b'\x00' and byte_str[i] != 0:
                 compress = False
-                break;
+                break
         if compress:
             result.append(BinaryOutput.convert_16bit_number(length + 32768))
             result.append(string.encode('latin-1'))
@@ -136,7 +163,7 @@ class BinaryOutput(object):
 
     def dump_32bit_number_list(self, array):
         self.dump_32bit_number(len(array))
-        index = 0;
+        index = 0
         input_length = len(array)
         while index < input_length:
             if array[index] == 0:
@@ -185,7 +212,7 @@ class BinaryOutput(object):
         return change > 2
 
     def _search_double_zero(self, array, offset):
-        is_last_zero = False;
+        is_last_zero = False
         for i in _range(offset, len(array)):
             if array[i] == 0:
                 if is_last_zero:
@@ -211,14 +238,13 @@ class BinaryOutput(object):
     def _create_zebra_code(self, array, offset):
         last = min(offset + 15, len(array))
         code = 0x8000
-        temp_output = self._output
         index = len(self._output)
         for i in _range(offset, last):
             if array[i] != 0:
-                self.dump_32bit_number(array[i]);
-                code = code + (0x1 << (i - offset));
+                self.dump_32bit_number(array[i])
+                code = code + (0x1 << (i - offset))
         self._output.insert(index, struct.pack('<H', code % (2 ** 16)))
         self.outputBytes += 2
 
     def result(self):
-        return b''.join(self._output);
+        return b''.join(self._output)

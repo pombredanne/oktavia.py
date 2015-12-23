@@ -1,3 +1,29 @@
+#
+# http://shibu.mit-license.org/
+#  The MIT License (MIT)
+#
+# Copyright (c) 2015 Yoshiki Shibukawa
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+from __future__ import absolute_import, print_function, division
+
+
 class Proposal(object):
     def __init__(self, omit, expect):
         self.omit = omit
@@ -12,7 +38,7 @@ class Position(object):
 
 
 class SearchUnit(object):
-    def __init__ (self, id):
+    def __init__ (self, id):  # @ReservedAssignment
         self.positions = {}
         self.id = id
         self._size = 0
@@ -20,7 +46,7 @@ class SearchUnit(object):
         self.startPosition = -1
 
     def add_position(self, word, position, stemmed):
-        if position not in self.positions: 
+        if position not in self.positions:
             self._size += 1
             self.positions[position] = Position(word, position, stemmed)
         else:
@@ -43,7 +69,7 @@ class SearchUnit(object):
         result = []
         for pos in self.positions:
             result.append(pos)
-        result.sort(key=lambda a: -a.position)
+        result.sort(key=lambda a:-a.position)
         return result
 
 
@@ -78,7 +104,7 @@ class SingleResult(object):
         return len(self.units)
 
     def _andMerge(self, result, rhs):
-        for i, id in enumerate(self.unitIds):
+        for i, id in enumerate(self.unitIds):  # @ReservedAssignment
             if id in rhs.unitIds:
                 lhsSection = self.units[i]
                 result.unitIds.append(id)
@@ -88,7 +114,7 @@ class SingleResult(object):
         result.unitIds = self.unitIds[:]
         result.units = self.units[:]
 
-        for i, id in enumerate(rhs.unitIds):
+        for i, id in enumerate(rhs.unitIds):  # @ReservedAssignment
             rhsSection = rhs.units[i]
             if id in result.unitIds:
                 lhsSection = result.units[result.unitIds.index(id)]
@@ -98,7 +124,7 @@ class SingleResult(object):
                 result.units.append(rhsSection)
 
     def _notMerge(self, result, rhs):
-        for i, id in enumerate(self.unitIds):
+        for i, id in enumerate(self.unitIds):  # @ReservedAssignment
             if id not in rhs.unitIds:
                 lhsSection = self.units[i]
                 result.unitIds.append(id)
@@ -132,13 +158,13 @@ class SearchSummary(object):
                     tmpSource.append(self.sourceResults[j])
             result = self.merge_result(tmpSource)
             proposals.append(Proposal(i, len(result)))
-        
-        proposals.sort(key=lambda a: -a.expect)
+
+        proposals.sort(key=lambda a:-a.expect)
         return proposals
 
     def get_sorted_result(self):
         result = self.result.units[:]
-        result.sort(key=lambda a: -a.score)
+        result.sort(key=lambda a:-a.score)
         return result
 
     def __len__(self):

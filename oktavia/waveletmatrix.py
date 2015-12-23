@@ -1,24 +1,48 @@
-'''
+#
+# http://shibu.mit-license.org/
+#  The MIT License (MIT)
+#
+# Copyright (c) 2015 Yoshiki Shibukawa
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+"""
 This is a JSX version of shellinford library:
 https://code.google.com/p/shellinford/
 
 License: http://shibu.mit-license.org/
-'''
+"""
 
-import sys
+from __future__ import absolute_import, print_function, division
+
 import copy
 import math
 import struct
+import sys
 
-from . import binaryio
-from . import bitvector
 
-try:
-    from . import _bitvector as native_bitvector
-except ImportError:
-    native_bitvector = None
+from oktavia import RangeError
+
+from oktavia import bitvector
+
 
 _range = range if sys.version_info[0] == 3 else xrange
+
 
 class WaveletMatrix(object):
 
@@ -55,14 +79,11 @@ class WaveletMatrix(object):
         if isinstance(v, str):
             # convert to JavaScript compatible string
             rawstring = v.encode('utf_16_le')
-            v = struct.unpack("<%dH" % size, rawstring)
+            v = struct.unpack('<%dH' % size, rawstring)
         self._usedChars = set(v)
         bitsize = self.bitsize()
         for i in _range(bitsize):
-            if native_bitvector:
-                self._bv.append(native_bitvector.BitVector())
-            else:
-                self._bv.append(bitvector.BitVector())
+            self._bv.append(bitvector.BitVector())
             self._seps.append(0)
         self._size = size
         for i, c in enumerate(v):
@@ -92,8 +113,8 @@ class WaveletMatrix(object):
             pos1 = self._seps[depth]
             for begin, value in sorted(range_rev.items()):
                 end = range_tmp[value]
-                num0  = self._bv[depth].rank(end, False) - self._bv[depth].rank(begin, False)
-                num1  = end - begin - num0
+                num0 = self._bv[depth].rank(end, False) - self._bv[depth].rank(begin, False)
+                num1 = end - begin - num0
                 if num0 > 0:
                     self._range[value << 1] = pos0
                     pos0 += num0
@@ -104,13 +125,13 @@ class WaveletMatrix(object):
 
     def size(self):
         return self._size
-    
+
     def count(self, c):
         return self.rank(self.size(), c)
-    
+
     def get(self, i):
         if i >= self.size():
-            raise RangeError("WaveletMatrix.get() : range error")
+            raise RangeError('WaveletMatrix.get() : range error')
         value = 0
         depth = 0
         bitsize = self.bitsize()
@@ -126,13 +147,13 @@ class WaveletMatrix(object):
 
     def rank(self, i, c):
         if i > self.size():
-            raise RangeError("WaveletMatrix.rank(): range error")
+            raise RangeError('WaveletMatrix.rank(): range error')
         if i == 0:
             return 0
         begin = self._range.get(c)
         if begin == None:
             return 0
-        end   = i
+        end = i
         depth = 0
         bitsize = self.bitsize()
         while depth < bitsize:
@@ -142,40 +163,36 @@ class WaveletMatrix(object):
                 end += self._seps[depth]
             depth += 1
         return end - begin
-    
+
     def rank_less_than(self, i, c):
         if i > self.size():
-            raise RangeError("WaveletMatrix.rank_less_than(): range error")
+            raise RangeError('WaveletMatrix.rank_less_than(): range error')
         if i == 0:
             return 0
         begin = 0
-        end   = i
+        end = i
         depth = 0
-        rlt   = 0
+        rlt = 0
         bitsize = self.bitsize()
         while depth < bitsize:
             rank0_begin = self._bv[depth].rank(begin, False)
-            rank0_end   = self._bv[depth].rank(end,   False)
+            rank0_end = self._bv[depth].rank(end, False)
             if self._uint2bit(c, depth, bitsize):
                 rlt += (rank0_end - rank0_begin)
                 begin += (self._seps[depth] - rank0_begin)
-                end   += (self._seps[depth] - rank0_end)
+                end += (self._seps[depth] - rank0_end)
             else:
                 begin = rank0_begin
-                end   = rank0_end
+                end = rank0_end
             depth += 1
         return rlt
-    
+
     def dump(self, output):
         output.dump_16bit_number(self._maxcharcode)
         output.dump_16bit_number(self.bitsize())
         output.dump_32bit_number(self._size)
         for i in _range(self.bitsize()):
-            if native_bitvector:
-                output.dump_32bit_number(self._bv[i].size())
-                output.dump_32bit_number_list(self._bv[i].int32vector())
-            else:
-                self._bv[i].dump(output)
+            self._bv[i].dump(output)
         for i in _range(self.bitsize()):
             output.dump_32bit_number(self._seps[i])
         output.dump_32bit_number(len(self._range))
@@ -183,23 +200,22 @@ class WaveletMatrix(object):
             output.dump_32bit_number(key)
             output.dump_32bit_number(value)
 
-    def load(self, input):
+    def load(self, input):  # @ReservedAssignment
         self.clear()
         self._maxcharcode = input.load_16bit_number()
         self._bitsize = input.load_16bit_number()
         self._size = input.load_32bit_number()
-        for i in _range(self.bitsize()):
+        for _ in _range(self.bitsize()):
             bit_vector = bitvector.BitVector()
             bit_vector.load(input)
             self._bv.append(bit_vector)
-        for i in _range(self.bitsize()):
+        for _ in _range(self.bitsize()):
             self._seps.append(input.load_32bit_number())
         range_size = input.load_32bit_number()
-        for i in _range(range_size):
+        for _ in _range(range_size):
             key = input.load_32bit_number()
             value = input.load_32bit_number()
             self._range[key] = value
 
     def _uint2bit(self, c, i, bitsize):
         return ((c >> (bitsize - 1 - i)) & 0x1) == 0x1
-

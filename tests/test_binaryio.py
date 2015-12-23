@@ -1,6 +1,33 @@
+#
+# http://shibu.mit-license.org/
+#  The MIT License (MIT)
+#
+# Copyright (c) 2015 Yoshiki Shibukawa
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+from __future__ import absolute_import, print_function, division
+
 import unittest
+
 from oktavia.binaryio import BinaryInput
 from oktavia.binaryio import BinaryOutput
+
 
 class BinaryIOTest(unittest.TestCase):
     def test_16bit_number(self):
@@ -73,19 +100,19 @@ class BinaryIOTest(unittest.TestCase):
 
         output = BinaryOutput()
         output.dump_string_list_map(src)
-        input = BinaryInput(output.result())
+        input = BinaryInput(output.result())  # @ReservedAssignment
         result = input.load_string_list_map()
         self.assertEqual('HELLO', result['hello'][0])
         self.assertEqual('WORLD', result['world'][0])
 
     def test_32bit_number_list_blank(self):
-        list = [0, 0, 0, 0, 0, 0]
+        list = [0, 0, 0, 0, 0, 0]  # @ReservedAssignment
 
         output = BinaryOutput()
         output.dump_32bit_number_list(list)
         self.assertEqual((2 + 1) * 2, len(output.result()))
 
-        input = BinaryInput(output.result())
+        input = BinaryInput(output.result())  # @ReservedAssignment
         result = input.load_32bit_number_list()
         self.assertEqual(6, len(result))
         self.assertEqual(0, result[0])
@@ -93,13 +120,13 @@ class BinaryIOTest(unittest.TestCase):
         self.assertEqual((2 + 1) * 2, input._offset)
 
     def test_32bit_number_list_non_blank(self):
-        list = [1, 1, 1, 1, 1, 1]
+        list = [1, 1, 1, 1, 1, 1]  # @ReservedAssignment
 
         output = BinaryOutput()
         output.dump_32bit_number_list(list)
         self.assertEqual(2 * (2 * 6 + 2 + 1), len(output.result()))
 
-        input = BinaryInput(output.result())
+        input = BinaryInput(output.result())  # @ReservedAssignment
         result = input.load_32bit_number_list()
         self.assertEqual(6, len(result))
         self.assertEqual(1, result[0])
@@ -107,13 +134,13 @@ class BinaryIOTest(unittest.TestCase):
         self.assertEqual(2 * (2 * 6 + 2 + 1), input._offset)
 
     def test_32bit_number_list_zebra(self):
-        list = [1, 0, 1, 0, 1, 0]
+        list = [1, 0, 1, 0, 1, 0]  # @ReservedAssignment
 
         output = BinaryOutput()
         output.dump_32bit_number_list(list)
         self.assertEqual(2 * (2 * 3 + 2 + 1), len(output.result()))
 
-        input = BinaryInput(output.result())
+        input = BinaryInput(output.result())  # @ReservedAssignment
         result = input.load_32bit_number_list()
         self.assertEqual(6, len(result))
         self.assertEqual(1, result[0])
@@ -126,13 +153,13 @@ class BinaryIOTest(unittest.TestCase):
 
     def test_32bit_number_list_combo1(self):
         # non-blank + blank
-        list = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0]
+        list = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0]  # @ReservedAssignment
 
         output = BinaryOutput()
         output.dump_32bit_number_list(list)
         self.assertEqual(2 * (2 + 1 + 2 * 17 + 1), len(output.result()))
 
-        input = BinaryInput(output.result())
+        input = BinaryInput(output.result())  # @ReservedAssignment
         result = input.load_32bit_number_list()
         self.assertEqual(len(list), len(result))
         self.assertEqual(1, result[0])
@@ -143,14 +170,13 @@ class BinaryIOTest(unittest.TestCase):
 
     def test_32bit_number_list_combo2(self):
         # blank + non-blank
-        list = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-
+        list = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]  # @ReservedAssignment
 
         output = BinaryOutput()
         output.dump_32bit_number_list(list)
         self.assertEqual(2 * (2 + 1 + 1 + 2 * 17), len(output.result()))
 
-        input = BinaryInput(output.result())
+        input = BinaryInput(output.result())  # @ReservedAssignment
         result = input.load_32bit_number_list()
         self.assertEqual(len(list), len(result))
         self.assertEqual(0, result[0])
@@ -161,13 +187,13 @@ class BinaryIOTest(unittest.TestCase):
 
     def test_32bit_number_list_combo3(self):
         # non-blank + zebra
-        list = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0]
+        list = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0]  # @ReservedAssignment
 
         output = BinaryOutput()
         output.dump_32bit_number_list(list)
         self.assertEqual(2 * (2 + 1 + 2 * 16 + 1 + 1 + 2 * 3), len(output.result()))
 
-        input = BinaryInput(output.result())
+        input = BinaryInput(output.result())  # @ReservedAssignment
         result = input.load_32bit_number_list()
         self.assertEqual(len(list), len(result))
         self.assertEqual(1, result[0])
@@ -178,13 +204,13 @@ class BinaryIOTest(unittest.TestCase):
 
     def test_32bit_number_list_combo4(self):
         # zebra + non-block
-        list = [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]
+        list = [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]  # @ReservedAssignment
 
         output = BinaryOutput()
         output.dump_32bit_number_list(list)
         self.assertEqual(2 * (2 + 1 + 2 * 11 + 1 + 2 * 16), len(output.result()))
 
-        input = BinaryInput(output.result())
+        input = BinaryInput(output.result())  # @ReservedAssignment
         result = input.load_32bit_number_list()
         self.assertEqual(len(list), len(result))
         self.assertEqual(1, result[0])
@@ -195,13 +221,13 @@ class BinaryIOTest(unittest.TestCase):
 
     def test_32bit_number_list_combo5(self):
         # zero + zebra
-        list = [0, 0, 0, 0, 0, 0, 1]
+        list = [0, 0, 0, 0, 0, 0, 1]  # @ReservedAssignment
 
         output = BinaryOutput()
         output.dump_32bit_number_list(list)
         self.assertEqual(2 * (2 + 1 + 1 + 2), len(output.result()))
 
-        input = BinaryInput(output.result())
+        input = BinaryInput(output.result())  # @ReservedAssignment
         result = input.load_32bit_number_list()
         self.assertEqual(len(list), len(result))
         self.assertEqual(0, result[0])
@@ -210,13 +236,13 @@ class BinaryIOTest(unittest.TestCase):
 
     def test_32bit_number_list_combo6(self):
         # zebra + zero
-        list = [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        list = [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]  # @ReservedAssignment
 
         output = BinaryOutput()
         output.dump_32bit_number_list(list)
         self.assertEqual(2 * (2 + 1 + 2 * 12 + 1), len(output.result()))
 
-        input = BinaryInput(output.result())
+        input = BinaryInput(output.result())  # @ReservedAssignment
         result = input.load_32bit_number_list()
         self.assertEqual(len(list), len(result))
         self.assertEqual(1, result[0])

@@ -1,21 +1,47 @@
-'''
+#
+# http://shibu.mit-license.org/
+#  The MIT License (MIT)
+#
+# Copyright (c) 2015 Yoshiki Shibukawa
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+"""
 Original source code:
 *  G. Nong, S. Zhang and W. H. Chan, Two Efficient Algorithms for Linear Time Suffix Array Construction, IEEE Transactions on Computers, To Appear
-* http:#www.cs.sysu.edu.cn/nong/index.files/Two%20Efficient%20Algorithms%20for%20Linear%20Suffix%20Array%20Construction.pdf
-'''
+* http://www.cs.sysu.edu.cn/nong/index.files/Two%20Efficient%20Algorithms%20for%20Linear%20Suffix%20Array%20Construction.pdf
+"""
+
+from __future__ import absolute_import, print_function, division
 
 import sys
-from . import bitvector
 
 try:
-    from . import _bitvector as native_bitvector
+    from oktavia import _bitvector as bitvector
 except ImportError:
-    native_bitvector = None
+    from oktavia import bitvector
+
 
 _range = range if sys.version_info[0] == 3 else xrange
 
+
 class OArray(object):
-    def __init__(self, array, offset = 0):
+    def __init__(self, array, offset=0):
         self.array = array
         self.offset = offset
 
@@ -31,6 +57,7 @@ class OArray(object):
     def compare(self, index1, index2):
         return self.array[index1 + self.offset] == self.array[index2 + self.offset]
 
+
 class SAIS(object):
     @staticmethod
     def _isLMS(t, i):
@@ -38,20 +65,20 @@ class SAIS(object):
 
     @staticmethod
     def _getBuckets(s, bkt, n, K, end):
-        '''find the start or end of each bucket'''
-        sum = 0
+        """find the start or end of each bucket"""
+        sum = 0  # @ReservedAssignment
         for i in _range(K + 1):
-            bkt[i] = 0 # clear all buckets
+            bkt[i] = 0  # clear all buckets
         for i in _range(n):
-            bkt[s.get(i)] += 1 # compute the size of each bucket
+            bkt[s.get(i)] += 1  # compute the size of each bucket
         for i in _range(K + 1):
             sum += bkt[i]
             bkt[i] = sum if end else sum - bkt[i]
 
     @staticmethod
     def _induceSAl(t, SA, s, bkt, n, K, end):
-        # compute SAl
-        SAIS._getBuckets(s, bkt, n, K, end) # find starts of buckets
+        """compute SAl."""
+        SAIS._getBuckets(s, bkt, n, K, end)  # find starts of buckets
         for i in _range(n):
             j = SA[i] - 1
             if j >= 0 and not t.get(j):
@@ -61,8 +88,8 @@ class SAIS(object):
 
     @staticmethod
     def _induceSAs(t, SA, s, bkt, n, K, end):
-        # compute SAs
-        SAIS._getBuckets(s, bkt, n, K, end) # find ends of buckets
+        """compute SAs."""
+        SAIS._getBuckets(s, bkt, n, K, end)  # find ends of buckets
         for i in _range(n - 1, -1, -1):
             j = SA[i] - 1
             if j >= 0 and t.get(j):
@@ -72,16 +99,16 @@ class SAIS(object):
 
     @staticmethod
     def make(source, rawmode=False):
-        '''
+        """
         find the suffix array SA of s[0..n-1] in 1..K^n
         require s[n-1]=0 (the sentinel!), n>=2
         use a working space (excluding s and SA) of at most 2.25n+O(1) for a constant alphabet
-        '''
+        """
         if rawmode:
             charCodes = source
         else:
             charCodes = [ord(c) for c in source]
-        
+
         SA = [0] * len(source)
         s = OArray(charCodes)
         SAIS._make(s, SA, len(source), max(charCodes))
@@ -89,19 +116,16 @@ class SAIS(object):
 
     @staticmethod
     def _make(s, SA, n, K):
-        # Classify the type of each character
-        if native_bitvector:
-            t = native_bitvector.BitVector()
-        else:
-            t = bitvector.BitVector()
+        """Classify the type of each character."""
+        t = bitvector.BitVector()
         t.set(n - 2, False)
-        t.set(n - 1, True) # the sentinel must be in s1, important!!!
+        t.set(n - 1, True)  # the sentinel must be in s1, important!!!
         for i in _range(n - 3, -1, -1):
             t.set(i, s.isS(i) or (s.compare(i, i + 1) and t.get(i + 1)))
         # stage 1: reduce the problem by at least 1/2
         # sort all the S-substrings
         bkt = [0] * (K + 1)
-        SAIS._getBuckets(s, bkt, n, K, True) # find ends of buckets
+        SAIS._getBuckets(s, bkt, n, K, True)  # find ends of buckets
         for i in _range(n):
             SA[i] = -1
         for i in _range(1, n):
@@ -121,8 +145,9 @@ class SAIS(object):
 
         # find the lexicographic names of all substrings
         for i in _range(n1, n):
-            SA[i]=-1 # init the name array buffer
-        
+            # init the name array buffer
+            SA[i] = -1
+
         name = 0
         prev = -1
         for i in _range(n1):
@@ -132,14 +157,14 @@ class SAIS(object):
                 if prev == -1 or not s.compare(pos + d, prev + d) or t.get(pos + d) != t.get(prev + d):
                     diff = True
                     break
-                elif d > 0 and (SAIS._isLMS(t, pos+d) or SAIS._isLMS(t, prev + d)):
+                elif d > 0 and (SAIS._isLMS(t, pos + d) or SAIS._isLMS(t, prev + d)):
                     break
             if diff:
                 name += 1
                 prev = pos
             pos = pos // 2 if (pos % 2 == 0) else (pos - 1) // 2
             SA[n1 + pos] = name - 1
-       
+
         j = n - 1
         for i in _range(n - 1, n1 - 1, -1):
             if SA[i] >= 0:
@@ -158,16 +183,16 @@ class SAIS(object):
         # stage 3: induce the result for the original problem
         bkt = [0] * (K + 1)
         # put all left-most S characters into their buckets
-        SAIS._getBuckets(s, bkt, n, K, True) # find ends of buckets
+        SAIS._getBuckets(s, bkt, n, K, True)  # find ends of buckets
         j = 0
         for i in _range(n):
             if SAIS._isLMS(t, i):
-                s1.set(j, i) # get p1
+                s1.set(j, i)  # get p1
                 j += 1
         for i in _range(n1):
-            SA1[i] = s1.get(SA1[i]) # get index in s
+            SA1[i] = s1.get(SA1[i])  # get index in s
         for i in _range(n1, n):
-            SA[i] = -1 # init SA[n1..n-1]
+            SA[i] = -1  # init SA[n1..n-1]
         for i in _range(n1 - 1, -1, -1):
             j = SA[i]
             SA[i] = -1
@@ -176,4 +201,3 @@ class SAIS(object):
             SA[bkt[index]] = j
         SAIS._induceSAl(t, SA, s, bkt, n, K, False)
         SAIS._induceSAs(t, SA, s, bkt, n, K, True)
-

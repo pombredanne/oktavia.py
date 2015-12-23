@@ -1,5 +1,29 @@
-from . import bitvector
-from . import binaryio
+#
+# http://shibu.mit-license.org/
+#  The MIT License (MIT)
+#
+# Copyright (c) 2015 Yoshiki Shibukawa
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+from __future__ import absolute_import, print_function, division
+
+from oktavia import bitvector
 
 
 class Metadata(object):
@@ -12,12 +36,12 @@ class Metadata(object):
         return self._bitVector.rank(self._bitVector.size(), 1)
 
     def get_content(self, index):
-        '''
+        """
         :param index: index
         :type  index: int
-        '''
+        """
         if index < 0 or self._size() <= index:
-            raise IndexError("Section.getContent() : range error %d" % index)
+            raise IndexError('Section.getContent() : range error %d' % index)
         startPosition = 0
         if index > 0:
             startPosition = self._bitVector.select(index - 1, 1) + 1
@@ -25,36 +49,36 @@ class Metadata(object):
         return self._parent._get_substring(startPosition, length)
 
     def get_content_with_EOB(self, index):
-        '''
+        """
         :param index: index
         :type  index: int
-        '''
+        """
         if index < 0 or self._size() <= index:
-            raise IndexError("Section.getContent() : range error %d" % index)
-        
+            raise IndexError('Section.getContent() : range error %d' % index)
+
         startPosition = 0
         if index > 0:
             startPosition = self._bitVector.select(index - 1, 1) + 1
-        
+
         length = self._bitVector.select(index, 1) - startPosition + 1
         return self._parent._get_substring_with_EOB(startPosition, length)
 
     def get_start_position(self, index):
-        '''
+        """
         :param index: index
         :type  index: int
-        '''
+        """
         if index < 0 or self._size() <= index:
-            raise IndexError("Section.getContent() : range error %d" % index)
-        
+            raise IndexError('Section.getContent() : range error %d' % index)
+
         startPosition = 0
         if index > 0:
             startPosition = self._bitVector.select(index - 1, 1) + 1
-        
+
         return startPosition
-    
+
     def grouping(self, result, positions, word, stemmed):
-        '''
+        """
         :param result: result
         :type  result: SingleResult
         :param positions: positions
@@ -63,20 +87,20 @@ class Metadata(object):
         :type  word: str
         :param stemmed: stemmed
         :type  stemmed: bool
-        '''
+        """
         pass
 
     def get_information(self, index):
-        '''
+        """
         :param index: index
         :type  index: int
-        '''
+        """
         pass
 
     def _build(self):
         self._bitVector.build()
 
-    def _load_parent(self, input):
+    def _load_parent(self, input):  # @ReservedAssignment
         self._bitVector.load(input)
         self._parent._metadataLabels.append(self._name)
         self._parent._metadatas[self._name] = self
@@ -84,7 +108,7 @@ class Metadata(object):
     def _dump(self, output):
         output.dump_string(self._name)
         self._bitVector.dump(output)
-    
+
 
 class Section(Metadata):
     TypeID = 0
@@ -92,14 +116,14 @@ class Section(Metadata):
     def __init__(self, parent, name):
         super(Section, self).__init__(parent, name)
         self._names = []
-    
+
     def set_tail(self, name, index=None):
-        '''
+        """
         :param name: name
         :type  name: str
         :param index: index
         :type  index: int
-        '''
+        """
         if index is None:
             index = self._parent.content_size() - 1
         if self._parent._isLastEob:
@@ -108,36 +132,36 @@ class Section(Metadata):
         self._bitVector.set(index, 1)
 
     def size(self):
-        '''
+        """
         :return: section count
         :rtype: int
-        '''
+        """
         return len(self._names)
 
     def get_section_index(self, position):
-        '''
+        """
         :param position: position
         :type  position: int
         :return:
         :rtype: int
-        '''
+        """
         if position < 0 or self._bitVector.size() <= position:
-            raise IndexError("Section.getSectionIndex() : range error %d" % position)
+            raise IndexError('Section.getSectionIndex() : range error %d' % position)
         return self._bitVector.rank(position, 1)
 
     def get_name(self, index):
-        '''
+        """
         :param index: index
         :type  index: int
         :return: name
         :rtype: str
-        '''
+        """
         if index < 0 or self.size() <= index:
-            raise IndexError("Section.getName() : range error")
+            raise IndexError('Section.getName() : range error')
         return self._names[index]
 
     def grouping(self, result, positions, word, stemmed):
-        '''
+        """
         :param result: result
         :type  result: SingleResult
         :param positions: positions
@@ -146,7 +170,7 @@ class Section(Metadata):
         :type  word: str
         :param stemmed: stemmed
         :type  stemmed: bool
-        '''
+        """
         for position in positions:
             index = self.getSectionIndex(position)
             unit = result.getSearchUnit(index)
@@ -155,14 +179,14 @@ class Section(Metadata):
             unit.addPosition(word, position - unit.startPosition, stemmed)
 
     def get_information(self, index):
-        '''
+        """
         :param index: index
         :type  index: int
-        '''
+        """
         return self.getName(index)
 
     @staticmethod
-    def _load(parent, input):
+    def _load(parent, input):  # @ReservedAssignment
         name = input.load_string()
         section = Section(parent, name)
         section._load_parent(input)
@@ -172,7 +196,7 @@ class Section(Metadata):
         output.dump_16bit_number(Section.TypeID)
         super(Section, self)._dump(output)
         output.dump_string_list(self._names)
-    
+
 
 class Splitter(Metadata):
     TypeID = 1
@@ -181,17 +205,17 @@ class Splitter(Metadata):
         super(Splitter, self).__init__(parent, name)
 
     def size(self):
-        '''
+        """
         :return: section count
         :rtype: int
-        '''
+        """
         return self._size()
 
-    def split(self, index = None):
-        '''
+    def split(self, index=None):
+        """
         :param index: index
         :type  index: int
-        '''
+        """
         if index is None:
             index = self._parent.content_size() - 1
         if self._parent._isLastEob:
@@ -199,16 +223,16 @@ class Splitter(Metadata):
         self._bitVector.set(index, 1)
 
     def get_index(self, position):
-        '''
+        """
         :param position: position
         :type  position: int
-        '''
+        """
         if position < 0 or self._bitVector.size() <= position:
-            raise IndexError("Section.getSectionIndex() : range error")
+            raise IndexError('Section.getSectionIndex() : range error')
         return self._bitVector.rank(position, 1)
 
     def grouping(self, result, positions, word, stemmed):
-        '''
+        """
         :param result: result
         :type  result: SingleResult
         :param positions: positions
@@ -217,7 +241,7 @@ class Splitter(Metadata):
         :type  word: str
         :param stemmed: stemmed
         :type  stemmed: bool
-        '''
+        """
         for position in positions:
             index = self.get_index(position)
             unit = result.get_search_unit(index)
@@ -226,14 +250,14 @@ class Splitter(Metadata):
             unit.addPosition(word, position - unit.startPosition, stemmed)
 
     def get_information(self, index):
-        '''
+        """
         :param index: index
         :type  index: int
-        '''
-        return "%s %d" % (self._name, index + 1)
+        """
+        return '%s %d' % (self._name, index + 1)
 
     @staticmethod
-    def _load(parent, input):
+    def _load(parent, input):  # @ReservedAssignment
         name = input.load_string()
         section = Splitter(parent, name)
         section._load_parent(input)
@@ -246,7 +270,7 @@ class Splitter(Metadata):
 class Table(Metadata):
     TypeID = 2
 
-    def __init__(self, parent, name, headers = None):
+    def __init__(self, parent, name, headers=None):
         super(Table, self).__init__(parent, name)
         if headers is not None:
             self._headers = headers
@@ -261,7 +285,7 @@ class Table(Metadata):
     def set_column_tail(self):
         index = self._parent.content_size()
         if self._parent._isLastEob:
-            raise Error("Tail should not be 'eof' or 'eob'")
+            raise Exception("Tail should not be 'eof' or 'eob'")
         self._columnTails.set(index, 1)
 
     def set_column_tail_and_EOB(self):
@@ -271,10 +295,10 @@ class Table(Metadata):
     def set_row_tail(self):
         index = self._parent.content_size() - 1
         self._bitVector.set(index, 1)
-    
+
     def get_cell(self, position):
         if position < 0 or self._bitVector.size() <= position:
-            raise IndexError("Section.getSectionIndex() : range error %d" % position)
+            raise IndexError('Section.getSectionIndex() : range error %d' % position)
         row = self._bitVector.rank(position, 1)
         currentColumn = self._columnTails.rank(position, 1)
         lastRowColumn = 0
@@ -286,7 +310,7 @@ class Table(Metadata):
 
     def get_row_content(self, rowIndex):
         content = self.get_content_with_EOB(rowIndex)
-        values = content.split("\x01", len(self._headers))
+        values = content.split('\x01', len(self._headers))
         result = {}
         for i, header in enumerate(self._headers):
             if i < len(values):
@@ -296,7 +320,7 @@ class Table(Metadata):
         return result
 
     def grouping(self, result, positions, word, stemmed):
-        '''
+        """
         :param result: result
         :type  result: SingleResult
         :param positions: positions
@@ -305,15 +329,15 @@ class Table(Metadata):
         :type  word: str
         :param stemmed: stemmed
         :type  stemmed: bool
-        '''
+        """
         # TODO implement
         pass
 
     def get_information(self, index):
-        '''
+        """
         :param index: index
         :type  index: int
-        '''
+        """
         return ''
 
     def _build(self):
@@ -321,7 +345,7 @@ class Table(Metadata):
         self._columnTails.build()
 
     @staticmethod
-    def _load(parent, input):
+    def _load(parent, input):  # @ReservedAssignment
         name = input.load_string()
         table = Table(parent, name)
         table._load_parent(input)
@@ -334,6 +358,7 @@ class Table(Metadata):
         output.dump_string_list(self._headers)
         self._columnTails.dump(output)
 
+
 class Block(Metadata):
     TypeID = 3
 
@@ -342,7 +367,7 @@ class Block(Metadata):
         self._names = []
         self._start = False
 
-    def start_block(self, blockName, index = None):
+    def start_block(self, blockName, index=None):
         if index is None:
             index = self._parent.content_size() - 1
         if self._start:
@@ -362,15 +387,15 @@ class Block(Metadata):
         self._bitVector.set(index, 1)
 
     def size(self):
-        '''
+        """
         :return: section count
         :rtype: int
-        '''
+        """
         return len(self._names)
 
     def block_index(self, position):
         if position < 0 or (self._parent._fmindex.size() - 1) <= position:
-            raise IndexError("Block.block_index() : range error %d" % position)
+            raise IndexError('Block.block_index() : range error %d' % position)
         if position >= self._bitVector.size():
             position = self._bitVector.size() - 1
             result = self._bitVector.rank(position, 1) + 1
@@ -399,14 +424,14 @@ class Block(Metadata):
         return result
 
     def get_information(self, index):
-        '''
+        """
         :param index: index
         :type  index: int
-        '''
+        """
         return ''
 
     @staticmethod
-    def _load(parent, input):
+    def _load(parent, input):  # @ReservedAssignment
         name = input.load_string()
         block = Block(parent, name)
         block._load_parent(input)

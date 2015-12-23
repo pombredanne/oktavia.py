@@ -1,17 +1,42 @@
-'''
+#
+# http://shibu.mit-license.org/
+#  The MIT License (MIT)
+#
+# Copyright (c) 2015 Yoshiki Shibukawa
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+"""
 This is a Python version of shellinford library:
 https:#code.google.com/p/shellinford/
 
 License: http:#shibu.mit-license.org/
-'''
+"""
 
-import math
+from __future__ import absolute_import, print_function, division
+
 import struct
 import sys
 
-from . import waveletmatrix
-from . import bwt
-from . import binaryio
+from oktavia import RangeError
+from oktavia import bwt
+from oktavia import waveletmatrix
+
 
 _range = range if sys.version_info[0] == 3 else xrange
 
@@ -21,7 +46,7 @@ except NameError:
     _strtype = str
 
 class FMIndex(object):
-    def __init__(self, rawmode = False):
+    def __init__(self, rawmode=False):
         self._ddic = 0
         self._head = 0
         self._substr = []
@@ -43,7 +68,7 @@ class FMIndex(object):
 
     def size(self):
         return self._sv.size()
-    
+
     def content_size(self):
         return sum((len(s) for s in self._substr))
 
@@ -54,15 +79,14 @@ class FMIndex(object):
         return self._sv.get(pos)
 
     def get_rows(self, key, pos=None):
-        import sys
         if isinstance(key, _strtype):
             # convert to JavaScript compatible string
             rawstring = key.encode('utf_16_le')
-            key = struct.unpack("<%dH" % len(key), rawstring)
+            key = struct.unpack('<%dH' % len(key), rawstring)
         i = len(key) - 1
         c = key[i]
         first = self._rlt[c] + 1
-        last  = self._rlt[c + 1]
+        last = self._rlt[c + 1]
         while first <= last:
             if i == 0:
                 if pos is not None:
@@ -71,23 +95,23 @@ class FMIndex(object):
                     del pos[:]
                     pos.append(first)
                     pos.append(last)
-                return (last - first  + 1)
+                return (last - first + 1)
             i -= 1
             c = key[i]
             first = self._rlt[c] + self._sv.rank(first - 1, c) + 1
-            last  = self._rlt[c] + self._sv.rank(last,      c)
+            last = self._rlt[c] + self._sv.rank(last, c)
         return 0
 
     def get_position(self, i):
         if i >= self.size():
-            raise RangeError("FMIndex.get_position() : range error")
+            raise RangeError('FMIndex.get_position() : range error')
         pos = 0
         while i != self._head:
             if (i % self._ddic) == 0:
                 pos += (self._posdic[i // self._ddic] + 1)
                 break
             c = self._sv.get(i)
-            i = self._rlt[c] + self._sv.rank(i, c) #LF
+            i = self._rlt[c] + self._sv.rank(i, c)  # LF
             pos += 1
         return pos % self.size()
 
@@ -97,7 +121,7 @@ class FMIndex(object):
             for substr in self._substr:
                 doc += substr
         else:
-            doc = "".join(self._substr)
+            doc = ''.join(self._substr)
         return doc
 
     def get_substring(self, pos, length):
@@ -106,7 +130,7 @@ class FMIndex(object):
             return doc[pos : pos + length]
 
         if pos >= self.size():
-            raise RangeError("FMIndex.get_substring() : range error")
+            raise RangeError('FMIndex.get_substring() : range error')
         pos_end = min(pos + length, self.size())
         pos_tmp = self.size() - 1
         i = self._head
@@ -117,7 +141,7 @@ class FMIndex(object):
         codes = []
         while pos_tmp >= pos:
             c = self.get(i)
-            i = self._rlt[c] + self.rank(i, c) #LF
+            i = self._rlt[c] + self.rank(i, c)  # LF
             if pos_tmp < pos_end and c != 0:
                 codes.insert(0, c)
             if pos_tmp == 0:
@@ -129,14 +153,14 @@ class FMIndex(object):
         return struct.pack('<%dH' % len(codes), *codes).decode('utf_16_le')
 
     def build(self, ddic, maxChar=65535):
-        #import time
-        #time1 = time.time()
+        # import time
+        # time1 = time.time()
         doc = self._join()
-        #time2 = time.time()
-        #print("@@debug: join: %f" % (time2 - time1))
+        # time2 = time.time()
+        # print('@@debug: join: %f' % (time2 - time1))
         sa = bwt.BWT(doc, rawmode=self._rawmode)
-        #time3 = time.time()
-        #print("@@debug: bwt: %f" % (time3 - time2))
+        # time3 = time.time()
+        # print('@@debug: bwt: %f' % (time3 - time2))
         s = sa.get()
         self._ssize = len(s)
         self._head = sa.head()
@@ -144,23 +168,23 @@ class FMIndex(object):
         self._sv.set_max_char_code(maxChar)
         self._sv.build(s)
         size = self.size()
-        #time4 = time.time()
-        #print("@@debug: build wavelet matrix: %f" % (time4 - time3))
+        # time4 = time.time()
+        # print('@@debug: build wavelet matrix: %f' % (time4 - time3))
         for c in _range(maxChar):
             self._rlt[c] = self._sv.rank_less_than(size, c)
-        #time5 = time.time()
-        #print("@@debug: calc rank: %f" % (time5 - time4))
-        self._rlt[maxChar] = 0;
+        # time5 = time.time()
+        # print('@@debug: calc rank: %f' % (time5 - time4))
+        self._rlt[maxChar] = 0
         self._ddic = int(ddic)
         self._buildDictionaries()
-        #time6 = time.time()
-        #print("@@debug: build dict: %f" % (time6 - time5))
+        # time6 = time.time()
+        # print('@@debug: build dict: %f' % (time6 - time5))
         self._build = True
 
     def _buildDictionaries(self):
         del self._posdic[:]
         del self._idic[:]
-        for i in _range(self._ssize // self._ddic + 1):
+        for _ in _range(self._ssize // self._ddic + 1):
             self._posdic.append(0)
             self._idic.append(0)
         i = self._head
@@ -171,7 +195,7 @@ class FMIndex(object):
         if (pos % self._ddic) == 0:
             self._idic[pos // self._ddic] = i
         c = self._sv.get(i)
-        i = self._rlt[c] + self._sv.rank(i, c) #LF
+        i = self._rlt[c] + self._sv.rank(i, c)  # LF
         pos -= 1
         while i != self._head:
             if (i % self._ddic) == 0:
@@ -179,12 +203,12 @@ class FMIndex(object):
             if (pos % self._ddic) == 0:
                 self._idic[pos // self._ddic] = i
             c = self._sv.get(i)
-            i = self._rlt[c] + self._sv.rank(i, c) #LF
+            i = self._rlt[c] + self._sv.rank(i, c)  # LF
             pos -= 1
 
     def append(self, doc):
         if len(doc) == 0:
-            raise ValueError("FMIndex::append(): empty string")
+            raise ValueError('FMIndex::append(): empty string')
         self._substr.append(doc)
 
     def search(self, keyword):
@@ -209,7 +233,7 @@ class FMIndex(object):
         for v in self._idic:
             output.dump_32bit_number(v)
 
-    def load(self, input):
+    def load(self, input):  # @ReservedAssignment
         self.clear()
         self._ddic = int(input.load_32bit_number())
         self._ssize = input.load_32bit_number()
@@ -224,9 +248,9 @@ class FMIndex(object):
         size = input.load_32bit_number()
         del self._posdic[:]
         del self._idic[:]
-        for i in _range(size):
+        for _ in _range(size):
             self._posdic.append(input.load_32bit_number())
-        for i in _range(size):
+        for _ in _range(size):
             self._idic.append(input.load_32bit_number())
         self._build = True
 

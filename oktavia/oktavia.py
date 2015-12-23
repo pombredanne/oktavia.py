@@ -1,27 +1,56 @@
+#
+# http://shibu.mit-license.org/
+#  The MIT License (MIT)
+#
+# Copyright (c) 2015 Yoshiki Shibukawa
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+from __future__ import absolute_import, print_function, division
+
 import re
-import math
 import struct
-import snowballstemmer
-from . import fmindex
-from . import binaryio
-from . import query
-from . import searchresult
-from . import metadata
+
+from oktavia import binaryio
+from oktavia import fmindex
+from oktavia import metadata
+from oktavia import query
+from oktavia import searchresult
+
 
 if hasattr(__builtins__, 'unichr'):
     tostr = unichr
 else:
     tostr = chr
 
+
 wordsplitter = re.compile(r'\s')
 wordsplitter2 = re.compile(r'\W')
 
+
 def to_utf16(string):
     binary = string.encode('utf-16le')
-    return struct.unpack("%dH" % len(string), binary)
+    return struct.unpack('%dH' % len(string), binary)
+
 
 def from_utf16(codes):
-    return struct.pack("%dH" % len(codes), *codes).decode('utf-16le')
+    return struct.pack('%dH' % len(codes), *codes).decode('utf-16le')
+
 
 class Oktavia(object):
     # sentinels
@@ -51,7 +80,7 @@ class Oktavia(object):
 
     def add_section(self, key):
         if key in self._metadataLabels:
-            raise ValueError('Metadata name ' + key + ' is already exists')
+            raise ValueError('Metadata name ' + key + ' already exists')
         self._metadataLabels.append(key)
         section = metadata.Section(self, key)
         self._metadatas[key] = section
@@ -59,12 +88,12 @@ class Oktavia(object):
 
     def get_section(self, key):
         if key not in self._metadataLabels:
-            raise ValueError('Metadata name ' + key + " does't exists")
+            raise ValueError('Metadata name ' + key + ' does not exists')
         return self._metadatas[key]
 
     def add_splitter(self, key):
         if key in self._metadataLabels:
-            raise ValueError('Metadata name ' + key + ' is already exists')
+            raise ValueError('Metadata name ' + key + ' already exists')
         self._metadataLabels.append(key)
         splitter = metadata.Splitter(self, key)
         self._metadatas[key] = splitter
@@ -72,12 +101,12 @@ class Oktavia(object):
 
     def get_splitter(self, key):
         if key not in self._metadataLabels:
-            raise ValueError('Metadata name ' + key + " does't exists")
+            raise ValueError('Metadata name ' + key + ' does not exists')
         return self._metadatas[key]
 
     def add_table(self, key, headers):
         if key in self._metadataLabels:
-            raise ValueError('Metadata name ' + key + ' is already exists')
+            raise ValueError('Metadata name ' + key + ' already exists')
         self._metadataLabels.append(key)
         table = metadata.Table(self, key, headers)
         self._metadatas[key] = table
@@ -85,12 +114,12 @@ class Oktavia(object):
 
     def get_table(self, key):
         if key not in self._metadataLabels:
-            raise ValueError('Metadata name ' + key + " does't exists")
+            raise ValueError('Metadata name ' + key + ' does not exists')
         return self._metadatas[key]
 
     def add_block(self, key):
         if key in self._metadataLabels:
-            raise ValueError('Metadata name ' + key + ' is already exists')
+            raise ValueError('Metadata name ' + key + ' already exists')
         self._metadataLabels.append(key)
         block = metadata.Block(self, key)
         self._metadatas[key] = block
@@ -98,7 +127,7 @@ class Oktavia(object):
 
     def get_block(self, key):
         if key not in self._metadataLabels:
-            raise ValueError('Metadata name ' + key + " does't exists")
+            raise ValueError('Metadata name ' + key + ' does not exists')
         return self._metadatas[key]
 
     def add_end_of_block(self):
@@ -149,7 +178,7 @@ class Oktavia(object):
             keyword = to_utf16(keyword)
         for originalChar in keyword:
             if originalChar not in self._utf162compressCode:
-                resultChars.append("\x02")
+                resultChars.append('\x02')
             else:
                 char = self._utf162compressCode[originalChar]
                 resultChars.append(char)
@@ -157,7 +186,7 @@ class Oktavia(object):
 
     def raw_search(self, keyword, stemming=False):
         if not self._build:
-            raise RuntimeError("Oktavia.build() is not called yet")
+            raise RuntimeError('Oktavia.build() is not called yet')
         if stemming:
             result = []
             if self._stemmer:
@@ -172,7 +201,7 @@ class Oktavia(object):
 
     def search(self, queries):
         if not self._build:
-            raise RuntimeError("Oktavia.build() is not called yet")
+            raise RuntimeError('Oktavia.build() is not called yet')
         summary = searchresult.SearchSummary(self)
         for query in queries:
             summary.add_query(self._searchQuery(query))
@@ -190,7 +219,7 @@ class Oktavia(object):
 
     def build(self, cacheDensity=5):
         if self._build:
-            raise RuntimeError("Oktavia.build() is already called")
+            raise RuntimeError('Oktavia.build() is already called')
         for key in self._metadatas:
             self._metadatas[key]._build()
         maxCharCode = len(self._compressCode2utf16)
@@ -200,9 +229,9 @@ class Oktavia(object):
 
     def dump(self, verbose=False):
         if not self._build:
-            raise RuntimeError("Oktavia.build() is not called yet")
+            raise RuntimeError('Oktavia.build() is not called yet')
         output = binaryio.BinaryOutput()
-        headerSource = u"oktavia-02"
+        headerSource = u'oktavia-02'
         output.dump_raw_string(binaryio.BinaryOutput.convert_string(headerSource)[2:])
         if verbose:
             print('Source text size: %d bytes' % (self._fmindex.size() * 2))
@@ -224,11 +253,11 @@ class Oktavia(object):
         return output.result()
 
     def load(self, data):
-        headerSource = u"oktavia-02"
+        headerSource = u'oktavia-02'
         header = binaryio.BinaryOutput.convert_string(headerSource)[2:]
         if data[0:10] != header:
             raise ValueError('Invalid data file')
-        input = binaryio.BinaryInput(data, 10)
+        input = binaryio.BinaryInput(data, 10)  # @ReservedAssignment
         self._metadatas = {}
         self._metadataLabels = []
 
@@ -255,7 +284,7 @@ class Oktavia(object):
             elif typecode == metadata.Block.TypeID:
                 metadata.Block._load(self, input)
             else:
-                raise TypeError("Metadata TypeError: %d" % type)
+                raise TypeError('Metadata TypeError: %d' % type)
         self._build = True
 
     def content_size(self):
@@ -277,7 +306,7 @@ class Oktavia(object):
 
     def _get_substring(self, position, length):
         codes = self._fmindex.get_substring(position, length)
-        result = [] 
+        result = []
         for code in codes:
             if code > 2:
                 result.append(self._compressCode2utf16[code])
@@ -285,7 +314,7 @@ class Oktavia(object):
 
     def _get_substring_with_EOB(self, position, length):
         result = self._fmindex.get_substring(position, length)
-        str = []
+        str = []  # @ReservedAssignment
         for code in result:
             if code > 2:
                 str.append(self._compressCode2utf16[code])

@@ -1,3 +1,26 @@
+//
+// http://shibu.mit-license.org/
+//  The MIT License (MIT)
+//
+// Copyright (c) 2015 Yoshiki Shibukawa
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the "Software"), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+// the Software, and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 #include <Python.h>
 
 #ifdef _MSC_VER
@@ -13,12 +36,14 @@ static const int SMALL_BLOCK_SIZE = 32;
 static const int LARGE_BLOCK_SIZE = 256; 
 static const int BLOCK_RATE       = 8;
 
+
 struct BitVectorCore {
     std::vector<uint32_t> v;
     std::vector<uint32_t> r;
     uint64_t size;
     uint64_t size1;
 };
+
 
 uint32_t rank32(uint32_t x, int i) {
     x <<= (SMALL_BLOCK_SIZE - i);
@@ -29,6 +54,7 @@ uint32_t rank32(uint32_t x, int i) {
     x = ((x & 0xffff0000) >> 16) + (x & 0x0000ffff);
     return x;
 }
+
 
 int select32(uint32_t x, int i, bool b) {
     if (!b) {
@@ -82,6 +108,7 @@ typedef struct {
     BitVectorCore* bitvector;
 } BitVector;
 
+
 static void
 BitVector_dealloc(BitVector* self)
 {
@@ -89,6 +116,7 @@ BitVector_dealloc(BitVector* self)
     self->bitvector = 0;
     self->ob_type->tp_free((PyObject*)self);
 }
+
 
 static PyObject *
 BitVector_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
@@ -107,6 +135,7 @@ BitVector_init(BitVector* self, PyObject *args, PyObject *kwds) {
     return 0;
 }
 
+
 static PyObject*
 BitVector_build(BitVector* self) {
     self->bitvector->size1 = 0;
@@ -121,6 +150,7 @@ BitVector_build(BitVector* self) {
     Py_INCREF(Py_None);
     return Py_None;
 }
+
 
 static PyObject*
 BitVector_clear(BitVector* self) {
@@ -139,15 +169,18 @@ BitVector_size(BitVector* self) {
     return PyLong_FromLong(self->bitvector->size);
 }
 
+
 static PyObject*
 BitVector_size0(BitVector* self) {
     return PyLong_FromLong(self->bitvector->size - self->bitvector->size1);
 }
 
+
 static PyObject*
 BitVector_size1(BitVector* self) {
     return PyLong_FromLong(self->bitvector->size1);
 }
+
 
 static PyObject*
 BitVector_set(BitVector* self, PyObject *args, PyObject *keywds) {
@@ -176,6 +209,7 @@ BitVector_set(BitVector* self, PyObject *args, PyObject *keywds) {
     return Py_None;
 }
 
+
 static PyObject*
 BitVector_get(BitVector* self, PyObject* args) {
     int value;
@@ -192,6 +226,7 @@ BitVector_get(BitVector* self, PyObject* args) {
     int m  = 0x1 << r;
     return PyBool_FromLong(self->bitvector->v[q] & m);
 }
+
 
 
 static PyObject*
@@ -286,6 +321,7 @@ BitVector_select(BitVector* self, PyObject *args, PyObject *keywds) {
     return PyLong_FromLong(j * SMALL_BLOCK_SIZE + select32(self->bitvector->v[j], i, b));
 }
 
+
 static PyObject*
 BitVector_int32vector(BitVector* self) {
     int count = self->bitvector->v.size();
@@ -295,6 +331,7 @@ BitVector_int32vector(BitVector* self) {
     }
     return result; 
 }
+
 
 static PyMethodDef BitVector_methods[] = {
     {"build", (PyCFunction)BitVector_build, METH_NOARGS,
@@ -329,6 +366,7 @@ static PyMethodDef BitVector_methods[] = {
     },
     {NULL}  /* Sentinel */
 };
+
 
 static PyTypeObject BitVectorType = {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -375,6 +413,7 @@ static PyTypeObject BitVectorType = {
 static PyMethodDef module_methods[] = {
     {NULL}  /* Sentinel */
 };
+
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 #define PyMODINIT_FUNC void

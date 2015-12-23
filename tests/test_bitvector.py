@@ -1,11 +1,43 @@
+#
+# http://shibu.mit-license.org/
+#  The MIT License (MIT)
+#
+# Copyright (c) 2015 Yoshiki Shibukawa
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+from __future__ import absolute_import, print_function, division
+
 import unittest
-from oktavia.bitvector import BitVector
+
 from oktavia.binaryio import BinaryInput
 from oktavia.binaryio import BinaryOutput
-import oktavia
 
-if hasattr(oktavia, "native_bitvector"):
-    NativeBitVector = oktavia.native_bitvector.BitVector;
+from oktavia.bitvector import BitVector
+
+try:
+    from oktavia import _bitvector as native_bitvector
+except ImportError:
+    native_bitvector = None
+
+
+if native_bitvector:
+    NativeBitVector = native_bitvector.BitVector
     class NativeBitVectorText(unittest.TestCase):
         def setUp(self):
             self.bv0 = NativeBitVector()
@@ -23,10 +55,10 @@ if hasattr(oktavia, "native_bitvector"):
             self.bv0.build()
 
         def test_size(self):
-            self.assertEqual(self.src_values[-1] + 1, self.bv1.size()) # = 3001
-            self.assertEqual(len(self.src_values), self.bv1.size1())   # = 6
-            self.assertEqual(self.src_values[-1] + 1, self.bv0.size()) # = 3001
-            self.assertEqual(len(self.src_values), self.bv0.size0())   # = 6
+            self.assertEqual(self.src_values[-1] + 1, self.bv1.size())  # = 3001
+            self.assertEqual(len(self.src_values), self.bv1.size1())  # = 6
+            self.assertEqual(self.src_values[-1] + 1, self.bv0.size())  # = 3001
+            self.assertEqual(len(self.src_values), self.bv0.size0())  # = 6
 
         def test_get(self):
             for v in self.src_values:
@@ -62,10 +94,10 @@ class BitVectorTest(unittest.TestCase):
         self.bv0.build()
 
     def test_size(self):
-        self.assertEqual(self.src_values[-1] + 1, self.bv1.size()) # = 3001
-        self.assertEqual(len(self.src_values), self.bv1.size1())   # = 6
-        self.assertEqual(self.src_values[-1] + 1, self.bv0.size()) # = 3001
-        self.assertEqual(len(self.src_values), self.bv0.size0())   # = 6
+        self.assertEqual(self.src_values[-1] + 1, self.bv1.size())  # = 3001
+        self.assertEqual(len(self.src_values), self.bv1.size1())  # = 6
+        self.assertEqual(self.src_values[-1] + 1, self.bv0.size())  # = 3001
+        self.assertEqual(len(self.src_values), self.bv0.size0())  # = 6
 
     def test_get(self):
         for v in self.src_values:
@@ -83,8 +115,8 @@ class BitVectorTest(unittest.TestCase):
             self.assertEqual(v, self.bv0.select(i, False))
 
     def test_load_dump_and_size(self):
-        dump1 = BinaryOutput();
-        dump0 = BinaryOutput();
+        dump1 = BinaryOutput()
+        dump0 = BinaryOutput()
         self.bv1.dump(dump1)
         self.bv0.dump(dump0)
         self.bv1.load(BinaryInput(dump1.result()))
@@ -96,8 +128,8 @@ class BitVectorTest(unittest.TestCase):
         self.assertEqual(len(self.src_values), self.bv0.size0())
 
     def test_load_dump_and_get(self):
-        dump1 = BinaryOutput();
-        dump0 = BinaryOutput();
+        dump1 = BinaryOutput()
+        dump0 = BinaryOutput()
         self.bv1.dump(dump1)
         self.bv0.dump(dump0)
         self.bv1.load(BinaryInput(dump1.result()))
@@ -108,8 +140,8 @@ class BitVectorTest(unittest.TestCase):
             self.assertFalse(self.bv0.get(v))
 
     def test_load_dump_and_rank(self):
-        dump1 = BinaryOutput();
-        dump0 = BinaryOutput();
+        dump1 = BinaryOutput()
+        dump0 = BinaryOutput()
         self.bv1.dump(dump1)
         self.bv0.dump(dump0)
         self.bv1.load(BinaryInput(dump1.result()))
@@ -120,8 +152,8 @@ class BitVectorTest(unittest.TestCase):
             self.assertEqual(i, self.bv0.rank(v, False))
 
     def test_load_dump_and_select(self):
-        dump1 = BinaryOutput();
-        dump0 = BinaryOutput();
+        dump1 = BinaryOutput()
+        dump0 = BinaryOutput()
         self.bv1.dump(dump1)
         self.bv0.dump(dump0)
         self.bv1.load(BinaryInput(dump1.result()))
